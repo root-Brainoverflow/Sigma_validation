@@ -45,13 +45,12 @@ int main() {
     char fname[100];
     printf("SIGMA RULE NAME(.yaml): ");
     gets(fname);
-    if(strchr(".yaml", fname) == NULL) {
         fprintf(stderr, "지정된 파일이 없습니다\n");
+    if(strchr(fname, '.yaml') == NULL) {
         exit(1);        
     }
     fopen(fname, "r");
     if(fp == NULL) {
-        fprintf(stderr, "지정된 파일이 없습니다\n");
         exit(1);
     }
 
