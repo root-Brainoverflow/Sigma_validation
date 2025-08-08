@@ -49,7 +49,7 @@ int main() {
         fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
         exit(1);        
     }
-    fopen(fname, "r");
+    fp = fopen(fname, "r");
     if(fp == NULL) {
         fprintf(stderr, "No Selected File\n");
         exit(1);
