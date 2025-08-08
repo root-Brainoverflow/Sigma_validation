@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> // exit 위해 사용
 #include <string.h> // string 관련 function
+#include <yaml.h>
 
 struct rule {
     char *name;
