@@ -1,0 +1,32 @@
+title: Suspicious Encoded PowerShell Command
+id: 35c1fe1a-9d10-4e9b-a71d-ec9c8c9d1234
+status: experimental
+description: >
+  Detects PowerShell executions that leverage the -EncodedCommand
+  switch, a common technique used by attackers to hide malicious payloads
+  in base64-encoded strings.
+author: Brainoverflow
+date: 2025/08/08
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+
+
+logsource:
+  product: windows
+  category: process_creation
+
+detection:
+  selection:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains|all:
+      - '-enc'
+      - 'encodedcommand'
+
+  condition: selection
+
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.001
