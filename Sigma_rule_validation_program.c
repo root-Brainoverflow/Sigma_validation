@@ -45,12 +45,13 @@ int main() {
     char fname[100];
     printf("SIGMA RULE NAME(.yaml): ");
     gets(fname);
-        fprintf(stderr, "지정된 파일이 없습니다\n");
     if(strchr(fname, '.yaml') == NULL) {
+        fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
         exit(1);        
     }
     fopen(fname, "r");
     if(fp == NULL) {
+        fprintf(stderr, "No Selected File\n");
         exit(1);
     }
 
