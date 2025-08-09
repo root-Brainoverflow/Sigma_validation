@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> // exit 위해 사용
 #include <string.h> // string 관련 function
-#include <yaml.h>
+#include <yaml.h> // LibYAML
 
 struct rule {
     char *name;
@@ -42,22 +42,26 @@ struct rule parse_rule() {
 
 
 int main() {
-    FILE *fp = NULL;
     char fname[100];
+    yaml_parser_t parser;
+    yaml_event_t event;
+
     printf("SIGMA RULE NAME(.yaml): ");
     gets(fname);
     if(strstr(fname, ".yaml") == NULL) {
         fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
         exit(1);        
     }
-    fp = fopen(fname, "r");
-    if(fp == NULL) {
+    FILE *input = fopen(fname, "rb");
+    if(input == NULL) {
         fprintf(stderr, "No Selected File\n");
         exit(1);
     }
 
+    yaml_parser_initialize(&parser);
 
-    fclose(fp);
+
+    fclose(input);
 
     return 0;
 }
