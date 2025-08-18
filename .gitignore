@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/macos,c
-# Edit at https://www.toptal.com/developers/gitignore?templates=macos,c
+# Created by https://www.toptal.com/developers/gitignore/api/macos,c,visualstudiocode,executable
+# Edit at https://www.toptal.com/developers/gitignore?templates=macos,c,visualstudiocode,executable
 
 ### C ###
 # Prerequisites
@@ -55,6 +55,16 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+### Executable ###
+*.bat
+*.cgi
+*.com
+*.gadget
+*.jar
+*.pif
+*.vb
+*.wsf
+
 ### macOS ###
 # General
 .DS_Store
@@ -88,25 +98,8 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
-### Executable ###
-*.app
-*.bat
-*.cgi
-*.com
-*.exe
-*.gadget
-*.jar
-*.pif
-*.vb
-*.wsf
-
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
@@ -118,3 +111,5 @@ Temporary Items
 # Ignore all local history of files
 .history
 .ionide
+
+# End of https://www.toptal.com/developers/gitignore/api/macos,c,visualstudiocode,executable
