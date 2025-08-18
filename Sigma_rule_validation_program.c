@@ -3,65 +3,126 @@
 #include <string.h> // string 관련 function
 #include <yaml.h> // LibYAML
 
-struct rule {
-    char *name;
+typedef struct Logsource {
+    char *product;
+    char *category;
+}Logsource;
+
+typedef struct Detection {
+    char *selection;
+    char *condition;
+}Detection;
+
+typedef struct Rule {
+    char *title;
+    char *id;
     char *status;
     char *description;
     char *references;
     char *author;
     char *date;
     char *modified;
-    char *tags;
-    struct logsource *logsource;
-    struct detection *detection;
-    char *condition;
+    Logsource *logsource;
+    Detection *detection;
     char *level;
-};
+    char *tags;
+}Rule;
 
-struct logsource {
-    char *product;
-    char *category;
-};
+void parse_yaml(const char *filename, Rule *rule) {
+    FILE *file = fopen(filename, "r");
+    if(!file) {
+        fprintf(stderr, "No Selected File\n");
+        exit(1);
+    }
 
-struct detection {
-    char *selection;
-    struct fields *fields;
-    char *condition;
-};
+    yaml_parser_t parser;
+    yaml_event_t event;
+    char key = {0};
+    int is_key = 0;
 
-struct fields {
-    char *name;
-    char *appendix;
-};
+    yaml_parser_initialize(&parser);
+    yaml_parser_set_input_file(&parser, file);
 
-struct rule parse_rule() {
-    struct rule r;
-    
+    while(1) {
+        yaml_parser_parse(&parser, &event);
+        if (event.type == YAML_STREAM_END_EVENT)
+            break;
 
+        if (event.type == YAML_SCALAR_EVENT) {
+            if (!is_key){
+                strncpy(&key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                is_key = 1;
+            } else {
+                if (strcmp(&key, "title") == 0)
+                    strncpy(rule->title, (char *)event.data.scalar.value, sizeof(rule->title - 1));
+                else if (strcmp(&key, "id") == 0)
+                    strncpy(rule->id, (char *)event.data.scalar.value, sizeof(rule->id - 1));
+                else if (strcmp(&key, "status") == 0)
+                    strncpy(rule->status, (char *)event.data.scalar.value, sizeof(rule->status - 1));
+                else if (strcmp(&key, "description") == 0)
+                    strncpy(rule->description, (char *)event.data.scalar.value, sizeof(rule->description - 1));
+                else if (strcmp(&key, "references") == 0)
+                    strncpy(rule->references, (char *)event.data.scalar.value, sizeof(rule->references - 1));
+                else if (strcmp(&key, "author") == 0)
+                    strncpy(rule->author, (char *)event.data.scalar.value, sizeof(rule->author - 1));
+                else if (strcmp(&key, "date") == 0)
+                    strncpy(rule->date, (char *)event.data.scalar.value, sizeof(rule->date - 1));
+                else if (strcmp(&key, "modified") == 0)
+                    strncpy(rule->modified, (char *)event.data.scalar.value, sizeof(rule->modified - 1));
+                else if (strcmp(&key, "product") == 0)
+                    strncpy(rule->logsource->product, (char *)event.data.scalar.value, sizeof(rule->logsource->product - 1));
+                else if (strcmp(&key, "category") == 0)
+                    strncpy(rule->logsource->category, (char *)event.data.scalar.value, sizeof(rule->logsource->category - 1));
+                else if (strcmp(&key, "selection") == 0)
+                    strncpy(rule->detection->selection, (char *)event.data.scalar.value, sizeof(rule->detection->selection - 1));
+                else if (strcmp(&key, "condition") == 0)
+                    strncpy(rule->detection->condition, (char *)event.data.scalar.value, sizeof(rule->detection->condition - 1));
+                else if (strcmp(&key, "level") == 0)
+                    strncpy(rule->level, (char *)event.data.scalar.value, sizeof(rule->level - 1));
+                else if (strcmp(&key, "tags") == 0)
+                    strncpy(rule->tags, (char *)event.data.scalar.value, sizeof(rule->tags - 1));
+
+                is_key = 0;
+            }
+        }
+
+        yaml_event_delete(&event);
+    }
+
+    yaml_parser_delete(&parser);
+    fclose(file);
+}
+
+void print_yaml(const Rule *rule){
+    printf("title: %s\n", rule->title);
+    printf("id: %s\n", rule->id);
+    printf("status: %s\n", rule->status);
+    printf("description: %s\n", rule->description);
+    printf("author: %s\n", rule->author);
+    printf("date: %s\n", rule->date);
+    printf("references:\n %s\n", rule->references);
+    printf("logsource:\n");
+    printf("    product: %s\n", rule->logsource->category);
+    printf("    category: %s\n", rule->logsource->product);
+    printf("detection:\n");
+    printf("    selection:\n %s\n", rule->detection->selection);
+    printf("    condition:\n %s\n", rule->detection->condition);
+    printf("level:\n %s\n", rule->level);
+    printf("tags:\n %s\n", rule->tags);
 }
 
 
 int main() {
     char fname[100];
-    yaml_parser_t parser;
-    yaml_event_t event;
-
+    Rule rule = {0};
     printf("SIGMA RULE NAME(.yaml): ");
     gets(fname);
     if(strstr(fname, ".yaml") == NULL) {
         fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
         exit(1);        
     }
-    FILE *input = fopen(fname, "rb");
-    if(input == NULL) {
-        fprintf(stderr, "No Selected File\n");
-        exit(1);
-    }
-
-    yaml_parser_initialize(&parser);
-
-
-    fclose(input);
+    parse_yaml(fname, &rule);
+    print_yaml(&rule);
 
     return 0;
 }
