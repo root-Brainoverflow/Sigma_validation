@@ -69,6 +69,10 @@ void parse_yaml(const char *filename, Rule *rule) {
                     strncpy(rule->date, (char *)event.data.scalar.value, sizeof(rule->date) - 1);
                 else if (strcmp(key, "modified") == 0)
                     strncpy(rule->modified, (char *)event.data.scalar.value, sizeof(rule->modified) - 1);
+                else if (strcmp(key, "logsource") == 0) {
+                    strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                    continue;
+                }
                 else if (strcmp(key, "product") == 0)
                     strncpy(rule->logsource->product, (char *)event.data.scalar.value, sizeof(rule->logsource->product) - 1);
                 else if (strcmp(key, "category") == 0)
@@ -102,8 +106,8 @@ void print_yaml(const Rule *rule){
     printf("date: %s\n", rule->date);
     printf("references:\n %s\n", rule->references);
     printf("logsource:\n");
-    printf("    product: %s\n", rule->logsource->category);
-    printf("    category: %s\n", rule->logsource->product);
+    printf("    product: %s\n", rule->logsource->product);
+    printf("    category: %s\n", rule->logsource->category);
     printf("detection:\n");
     printf("    selection:\n %s\n", rule->detection->selection);
     printf("    condition:\n %s\n", rule->detection->condition);
