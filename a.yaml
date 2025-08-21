@@ -6,7 +6,7 @@ description: >
   switch, a common technique used by attackers to hide malicious payloads
   in base64-encoded strings.
 author: Brainoverflow
-date: 2025/08/08
+date: 2025-08-08
 references:
   - https://attack.mitre.org/techniques/T1059/001/
 
