@@ -16,16 +16,20 @@ logsource:
   category: process_creation
 
 detection:
-  selection:
+  sel_img:
     Image|endswith:
       - '\powershell.exe'
       - '\pwsh.exe'
+  sel_cmd:
     CommandLine|contains|all:
       - '-enc'
       - 'encodedcommand'
 
-  condition: selection
+  condition: sel_img and sel_cmd
 
+field:
+  - ParentImage
+  - ParentCommandLine
 
 level: high
 tags:
