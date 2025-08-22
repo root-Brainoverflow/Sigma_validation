@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> // exit 위해 사용
 #include <string.h> // string 관련 function
-#include <yaml.h> // LibYAML
+#include <yaml.h>   // LibYAML
 
 typedef struct Logsource {
     char product[80];
@@ -30,63 +30,81 @@ typedef struct Rule {
 
 void parse_yaml(const char *filename, Rule *rule) {
     FILE *file = fopen(filename, "r");
-    if(!file) {
+    if (!file) {
         fprintf(stderr, "No Selected File\n");
         exit(1);
     }
 
     yaml_parser_t parser;
     yaml_event_t event;
-    char key[20] = {0};
+    char key[80] = {0};
     int is_key = 0;
 
-    yaml_parser_initialize(&parser);
+    if (!yaml_parser_initialize(&parser)) {
+        fprintf(stderr, "Failed to initialize YAML parser\n");
+        fclose(file);
+        exit(1);
+    }
     yaml_parser_set_input_file(&parser, file);
 
-    while(1) {
-        yaml_parser_parse(&parser, &event);
-        if (event.type == YAML_STREAM_END_EVENT)
+    while (1) {
+        if (!yaml_parser_parse(&parser, &event)) {
+            fprintf(stderr, "YAML parse error\n");
+            yaml_parser_delete(&parser);
+            fclose(file);
+            exit(1);
+        }
+
+        if (event.type == YAML_STREAM_END_EVENT) {
+            yaml_event_delete(&event); // 누수 방지
             break;
+        }
+
+        // 맵/시퀀스 경계에서 이전 key 상태가 남지 않도록 정리
+        if (event.type == YAML_MAPPING_END_EVENT || event.type == YAML_SEQUENCE_END_EVENT) {
+            is_key = 0;
+        }
 
         if (event.type == YAML_SCALAR_EVENT) {
-            if (!is_key){
+            if (!is_key) {
+                // key로 취급
                 strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                key[sizeof(key) - 1] = '\0';
                 is_key = 1;
             } else {
-                if (strcmp(key, "title") == 0)
-                    strncpy(rule->title, (char *)event.data.scalar.value, sizeof(rule->title) - 1);
-                else if (strcmp(key, "id") == 0)
-                    strncpy(rule->id, (char *)event.data.scalar.value, sizeof(rule->id) - 1);
-                else if (strcmp(key, "status") == 0)
-                    strncpy(rule->status, (char *)event.data.scalar.value, sizeof(rule->status) - 1);
-                else if (strcmp(key, "description") == 0)
-                    strncpy(rule->description, (char *)event.data.scalar.value, sizeof(rule->description) - 1);
-                else if (strcmp(key, "references") == 0)
-                    strncpy(rule->references, (char *)event.data.scalar.value, sizeof(rule->references) - 1);
-                else if (strcmp(key, "author") == 0)
-                    strncpy(rule->author, (char *)event.data.scalar.value, sizeof(rule->author) - 1);
-                else if (strcmp(key, "date") == 0)
-                    strncpy(rule->date, (char *)event.data.scalar.value, sizeof(rule->date) - 1);
-                else if (strcmp(key, "modified") == 0)
-                    strncpy(rule->modified, (char *)event.data.scalar.value, sizeof(rule->modified) - 1);
-                else if (strcmp(key, "logsource") == 0) {
-                    strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
-                    continue;
-                }
-                else if (strcmp(key, "product") == 0)
-                    strncpy(rule->logsource->product, (char *)event.data.scalar.value, sizeof(rule->logsource->product) - 1);
-                else if (strcmp(key, "category") == 0)
-                    strncpy(rule->logsource->category, (char *)event.data.scalar.value, sizeof(rule->logsource->category) - 1);
-                else if (strcmp(key, "selection") == 0)
-                    strncpy(rule->detection->selection, (char *)event.data.scalar.value, sizeof(rule->detection->selection) - 1);
-                else if (strcmp(key, "condition") == 0)
-                    strncpy(rule->detection->condition, (char *)event.data.scalar.value, sizeof(rule->detection->condition) - 1);
-                else if (strcmp(key, "level") == 0)
-                    strncpy(rule->level, (char *)event.data.scalar.value, sizeof(rule->level) - 1);
-                else if (strcmp(key, "tags") == 0)
-                    strncpy(rule->tags, (char *)event.data.scalar.value, sizeof(rule->tags) - 1);
+                // value로 취급
+                const char *val = (char *)event.data.scalar.value;
 
-                is_key = 0;
+                if (strcmp(key, "title") == 0)
+                    strncpy(rule->title, val, sizeof(rule->title) - 1);
+                else if (strcmp(key, "id") == 0)
+                    strncpy(rule->id, val, sizeof(rule->id) - 1);
+                else if (strcmp(key, "status") == 0)
+                    strncpy(rule->status, val, sizeof(rule->status) - 1);
+                else if (strcmp(key, "description") == 0)
+                    strncpy(rule->description, val, sizeof(rule->description) - 1);
+                else if (strcmp(key, "references") == 0)
+                    strncpy(rule->references, val, sizeof(rule->references) - 1);
+                else if (strcmp(key, "author") == 0)
+                    strncpy(rule->author, val, sizeof(rule->author) - 1);
+                else if (strcmp(key, "date") == 0)
+                    strncpy(rule->date, val, sizeof(rule->date) - 1);
+                else if (strcmp(key, "modified") == 0)
+                    strncpy(rule->modified, val, sizeof(rule->modified) - 1);
+                else if (strcmp(key, "product") == 0)
+                    strncpy(rule->logsource[0].product, val, sizeof(rule->logsource[0].product) - 1);
+                else if (strcmp(key, "category") == 0)
+                    strncpy(rule->logsource[0].category, val, sizeof(rule->logsource[0].category) - 1);
+                else if (strcmp(key, "selection") == 0)
+                    strncpy(rule->detection[0].selection, val, sizeof(rule->detection[0].selection) - 1);
+                else if (strcmp(key, "condition") == 0)
+                    strncpy(rule->detection[0].condition, val, sizeof(rule->detection[0].condition) - 1);
+                else if (strcmp(key, "level") == 0)
+                    strncpy(rule->level, val, sizeof(rule->level) - 1);
+                else if (strcmp(key, "tags") == 0)
+                    strncpy(rule->tags, val, sizeof(rule->tags) - 1);
+
+                is_key = 0; // 다음 스칼라는 key로
             }
         }
 
@@ -97,7 +115,7 @@ void parse_yaml(const char *filename, Rule *rule) {
     fclose(file);
 }
 
-void print_yaml(const Rule *rule){
+void print_yaml(const Rule *rule) {
     printf("title: %s\n", rule->title);
     printf("id: %s\n", rule->id);
     printf("status: %s\n", rule->status);
@@ -106,27 +124,40 @@ void print_yaml(const Rule *rule){
     printf("date: %s\n", rule->date);
     printf("references:\n %s\n", rule->references);
     printf("logsource:\n");
-    printf("    product: %s\n", rule->logsource->product);
-    printf("    category: %s\n", rule->logsource->category);
+    printf("    product: %s\n", rule->logsource[0].product);
+    printf("    category: %s\n", rule->logsource[0].category);
     printf("detection:\n");
-    printf("    selection:\n %s\n", rule->detection->selection);
-    printf("    condition:\n %s\n", rule->detection->condition);
-    printf("level:\n %s\n", rule->level);
+    printf("    selection:\n %s\n", rule->detection[0].selection);
+    printf("    condition:\n %s\n", rule->detection[0].condition);
+    printf("level: %s\n", rule->level);
     printf("tags:\n %s\n", rule->tags);
 }
 
-
 int main() {
-    char fname[30];
-    Rule rule = {0};
+    char fname[256];
+    Rule rule;
+    memset(&rule, 0, sizeof(rule));
+
     printf("SIGMA RULE NAME(.yaml): ");
-    gets(fname);
-    if(strstr(fname, ".yaml") == NULL) {
-        fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
-        exit(1);        
+    if (!fgets(fname, sizeof(fname), stdin)) {
+        fprintf(stderr, "Failed to read filename\n");
+        exit(1);
     }
+
+    size_t len = strlen(fname);
+    if (len > 0 && fname[len - 1] == '\n')
+        fname[len - 1] = '\0';
+    if (fname[0] == '\0') {
+        fprintf(stderr, "Filename is empty\n");
+        exit(1);
+    }
+
+    if (strstr(fname, ".yaml") == NULL) {
+        fprintf(stderr, "Please Enter Valid Sigma Rule File\n");
+        exit(1);
+    }
+
     parse_yaml(fname, &rule);
     print_yaml(&rule);
-
     return 0;
 }
