@@ -39,6 +39,7 @@ void parse_yaml(const char *filename, Rule *rule) {
     yaml_event_t event;
     char key[80] = {0};
     int is_key = 0;
+    int is_mapping = 0;
 
     if (!yaml_parser_initialize(&parser)) {
         fprintf(stderr, "Failed to initialize YAML parser\n");
@@ -55,6 +56,10 @@ void parse_yaml(const char *filename, Rule *rule) {
             exit(1);
         }
 
+        if (event.type == YAML_MAPPING_START_EVENT) {
+            is_mapping += 1;
+        }
+
         if (event.type == YAML_STREAM_END_EVENT) {
             yaml_event_delete(&event);
             break;
@@ -62,6 +67,7 @@ void parse_yaml(const char *filename, Rule *rule) {
 
         if (event.type == YAML_MAPPING_END_EVENT || event.type == YAML_SEQUENCE_END_EVENT) {
             is_key = 0;
+            is_mapping = 0;
         }
 
         if (event.type == YAML_SCALAR_EVENT) {
@@ -72,36 +78,66 @@ void parse_yaml(const char *filename, Rule *rule) {
             } else {
                 const char *val = (char *)event.data.scalar.value;
 
-                if (strcmp(key, "title") == 0)
+                if (strcmp(key, "title") == 0) {
                     strncpy(rule->title, val, sizeof(rule->title) - 1);
-                else if (strcmp(key, "id") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "id") == 0) {
                     strncpy(rule->id, val, sizeof(rule->id) - 1);
-                else if (strcmp(key, "status") == 0)
+                    is_key = 0;
+                }  
+                else if (strcmp(key, "status") == 0) {
                     strncpy(rule->status, val, sizeof(rule->status) - 1);
-                else if (strcmp(key, "description") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "description") == 0) {
                     strncpy(rule->description, val, sizeof(rule->description) - 1);
-                else if (strcmp(key, "references") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "references") == 0) {
                     strncpy(rule->references, val, sizeof(rule->references) - 1);
-                else if (strcmp(key, "author") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "author") == 0) {
                     strncpy(rule->author, val, sizeof(rule->author) - 1);
-                else if (strcmp(key, "date") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "date") == 0) {
                     strncpy(rule->date, val, sizeof(rule->date) - 1);
-                else if (strcmp(key, "modified") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "modified") == 0) {
                     strncpy(rule->modified, val, sizeof(rule->modified) - 1);
-                else if (strcmp(key, "product") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "logsource") == 0) 
+                    strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                else if (strcmp(key, "product") == 0) {
                     strncpy(rule->logsource[0].product, val, sizeof(rule->logsource[0].product) - 1);
-                else if (strcmp(key, "category") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "category") == 0) {
                     strncpy(rule->logsource[0].category, val, sizeof(rule->logsource[0].category) - 1);
-                else if (strcmp(key, "selection") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "detection") == 0) 
+                    strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                else if (strcmp(key, "selection") == 0) {
                     strncpy(rule->detection[0].selection, val, sizeof(rule->detection[0].selection) - 1);
-                else if (strcmp(key, "condition") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "condition") == 0) {
                     strncpy(rule->detection[0].condition, val, sizeof(rule->detection[0].condition) - 1);
-                else if (strcmp(key, "level") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "level") == 0) {
                     strncpy(rule->level, val, sizeof(rule->level) - 1);
-                else if (strcmp(key, "tags") == 0)
+                    is_key = 0;
+                }
+                else if (strcmp(key, "tags") == 0) {
                     strncpy(rule->tags, val, sizeof(rule->tags) - 1);
-
-                is_key = 0;
+                    is_key = 0;
+                }
             }
         }
 
