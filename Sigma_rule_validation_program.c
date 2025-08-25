@@ -56,23 +56,20 @@ void parse_yaml(const char *filename, Rule *rule) {
         }
 
         if (event.type == YAML_STREAM_END_EVENT) {
-            yaml_event_delete(&event); // 누수 방지
+            yaml_event_delete(&event);
             break;
         }
 
-        // 맵/시퀀스 경계에서 이전 key 상태가 남지 않도록 정리
         if (event.type == YAML_MAPPING_END_EVENT || event.type == YAML_SEQUENCE_END_EVENT) {
             is_key = 0;
         }
 
         if (event.type == YAML_SCALAR_EVENT) {
             if (!is_key) {
-                // key로 취급
                 strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
                 key[sizeof(key) - 1] = '\0';
                 is_key = 1;
             } else {
-                // value로 취급
                 const char *val = (char *)event.data.scalar.value;
 
                 if (strcmp(key, "title") == 0)
@@ -104,7 +101,7 @@ void parse_yaml(const char *filename, Rule *rule) {
                 else if (strcmp(key, "tags") == 0)
                     strncpy(rule->tags, val, sizeof(rule->tags) - 1);
 
-                is_key = 0; // 다음 스칼라는 key로
+                is_key = 0;
             }
         }
 
@@ -121,7 +118,9 @@ void print_yaml(const Rule *rule) {
     printf("status: %s\n", rule->status);
     printf("description: %s\n", rule->description);
     printf("author: %s\n", rule->author);
-    printf("date: %s\n", rule->date);
+    printf("date: %s\n\n", rule->date);
+    if(rule->modified[0] != '\0')
+        printf("modified: %s\n\n", rule->modified);
     printf("references:\n %s\n", rule->references);
     printf("logsource:\n");
     printf("    product: %s\n", rule->logsource[0].product);
