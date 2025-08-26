@@ -3,13 +3,19 @@
 #include <string.h> // string 관련 function
 #include <yaml.h>   // LibYAML
 
+typedef struct Selection {
+    char name[80];
+    char field[80];
+    char details[80];
+}Selection;
+
 typedef struct Logsource {
     char product[80];
     char category[80];
 }Logsource;
 
 typedef struct Detection {
-    char selection[80];
+    Selection selection[80];
     char condition[80];
 }Detection;
 
@@ -22,8 +28,8 @@ typedef struct Rule {
     char author[80];
     char date[80];
     char modified[80];
-    Logsource logsource[80];
-    Detection detection[80];
+    Logsource logsource[1];
+    Detection detection[1];
     char level[80];
     char tags[80];
 }Rule;
@@ -40,6 +46,8 @@ void parse_yaml(const char *filename, Rule *rule) {
     char key[80] = {0};
     int is_key = 0;
     int is_mapping = 0;
+    int selection = 0;
+    int details = 0;
 
     if (!yaml_parser_initialize(&parser)) {
         fprintf(stderr, "Failed to initialize YAML parser\n");
@@ -68,6 +76,10 @@ void parse_yaml(const char *filename, Rule *rule) {
         if (event.type == YAML_MAPPING_END_EVENT || event.type == YAML_SEQUENCE_END_EVENT) {
             is_key = 0;
             is_mapping = 0;
+        }
+
+        if (event.type == YAML_SEQUENCE_START_EVENT) {
+            is_mapping++;
         }
 
         if (event.type == YAML_SCALAR_EVENT) {
@@ -113,21 +125,28 @@ void parse_yaml(const char *filename, Rule *rule) {
                 else if (strcmp(key, "logsource") == 0) 
                     strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
                 else if (strcmp(key, "product") == 0) {
-                    strncpy(rule->logsource[0].product, val, sizeof(rule->logsource[0].product) - 1);
+                    strncpy(rule->logsource->product, val, sizeof(rule->logsource->product) - 1);
                     is_key = 0;
                 }
                 else if (strcmp(key, "category") == 0) {
-                    strncpy(rule->logsource[0].category, val, sizeof(rule->logsource[0].category) - 1);
+                    strncpy(rule->logsource->category, val, sizeof(rule->logsource->category) - 1);
                     is_key = 0;
                 }
                 else if (strcmp(key, "detection") == 0) 
                     strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
-                else if (strcmp(key, "selection") == 0) {
-                    strncpy(rule->detection[0].selection, val, sizeof(rule->detection[0].selection) - 1);
+                else if (is_mapping == 2) {
+                    strncpy(rule->detection->selection[selection].name, key, sizeof(rule->detection->selection[selection].name - 1 ));
+                    strncpy(rule->detection->selection[selection].field, val, sizeof(rule->detection->selection[selection].field) - 1);
+                    selection++;
+                    is_key = 0;
+                }
+                else if (is_mapping == 3) {
+                    strncpy(rule->detection->selection[details].details, val, sizeof(rule->detection->selection[details].details) - 1);
+                    details++;
                     is_key = 0;
                 }
                 else if (strcmp(key, "condition") == 0) {
-                    strncpy(rule->detection[0].condition, val, sizeof(rule->detection[0].condition) - 1);
+                    strncpy(rule->detection->condition, val, sizeof(rule->detection->condition) - 1);
                     is_key = 0;
                 }
                 else if (strcmp(key, "level") == 0) {
@@ -154,16 +173,20 @@ void print_yaml(const Rule *rule) {
     printf("status: %s\n", rule->status);
     printf("description: %s\n", rule->description);
     printf("author: %s\n", rule->author);
-    printf("date: %s\n\n", rule->date);
+    printf("date: %s\n", rule->date);
     if(rule->modified[0] != '\0')
         printf("modified: %s\n\n", rule->modified);
     printf("references:\n %s\n", rule->references);
     printf("logsource:\n");
-    printf("    product: %s\n", rule->logsource[0].product);
-    printf("    category: %s\n", rule->logsource[0].category);
+    printf("    product: %s\n", rule->logsource->product);
+    printf("    category: %s\n", rule->logsource->category);
     printf("detection:\n");
-    printf("    selection:\n %s\n", rule->detection[0].selection);
-    printf("    condition:\n %s\n", rule->detection[0].condition);
+    for (int i = 0; i<2; i++){
+        printf("    %s\n", rule->detection->selection[i].name);
+        printf("        %s\n", rule->detection->selection[i].field);
+        printf("            \n %s\n", rule->detection->selection[i].details);
+    }
+    printf("    condition: %s\n", rule->detection->condition);
     printf("level: %s\n", rule->level);
     printf("tags:\n %s\n", rule->tags);
 }
