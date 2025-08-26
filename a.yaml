@@ -28,10 +28,6 @@ detection:
 
   condition: sel_img and sel_cmd
 
-field:
-  - ParentImage
-  - ParentCommandLine
-
 level: high
 tags:
   - attack.execution
