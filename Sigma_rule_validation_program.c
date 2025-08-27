@@ -3,10 +3,14 @@
 #include <string.h> // string 관련 function
 #include <yaml.h>   // LibYAML
 
+typedef struct Details{
+    char body[80];
+}Details;
+
 typedef struct Selection {
     char name[80];
     char field[80];
-    char details[80];
+    Details details[80];
 }Selection;
 
 typedef struct Logsource {
@@ -48,6 +52,7 @@ void parse_yaml(const char *filename, Rule *rule) {
     int is_mapping = 0;
     int selection = 0;
     int details = 0;
+    int in_detection = 0;
 
     if (!yaml_parser_initialize(&parser)) {
         fprintf(stderr, "Failed to initialize YAML parser\n");
@@ -65,7 +70,7 @@ void parse_yaml(const char *filename, Rule *rule) {
         }
 
         if (event.type == YAML_MAPPING_START_EVENT) {
-            is_mapping += 1;
+            is_mapping++;
         }
 
         if (event.type == YAML_STREAM_END_EVENT) {
@@ -74,6 +79,13 @@ void parse_yaml(const char *filename, Rule *rule) {
         }
 
         if (event.type == YAML_MAPPING_END_EVENT || event.type == YAML_SEQUENCE_END_EVENT) {
+            if (in_detection == 1 && event.type != YAML_MAPPING_END_EVENT) {
+                is_mapping--;
+                continue;
+            }
+            else if (in_detection == 1 && event.type == YAML_MAPPING_END_EVENT) {
+                continue;
+            }
             is_key = 0;
             is_mapping = 0;
         }
@@ -132,18 +144,24 @@ void parse_yaml(const char *filename, Rule *rule) {
                     strncpy(rule->logsource->category, val, sizeof(rule->logsource->category) - 1);
                     is_key = 0;
                 }
-                else if (strcmp(key, "detection") == 0) 
+                else if (strcmp(key, "detection") == 0)  {
                     strncpy(key, (char *)event.data.scalar.value, sizeof(key) - 1);
+                    in_detection = 1;
+                }
                 else if (is_mapping == 2) {
-                    strncpy(rule->detection->selection[selection].name, key, sizeof(rule->detection->selection[selection].name - 1 ));
+                    strncpy(rule->detection->selection[selection].name, key, sizeof(rule->detection->selection[selection].name) - 1 );
                     strncpy(rule->detection->selection[selection].field, val, sizeof(rule->detection->selection[selection].field) - 1);
                     selection++;
                     is_key = 0;
                 }
-                else if (is_mapping == 3) {
-                    strncpy(rule->detection->selection[details].details, val, sizeof(rule->detection->selection[details].details) - 1);
+                else if (is_mapping >= 3) {
+                    selection--;
+                    strncpy(rule->detection->selection[selection].details[details].body, key, sizeof(rule->detection->selection[selection].details[details].body) - 1);
                     details++;
+                    strncpy(rule->detection->selection[selection].details[details].body, val, sizeof(rule->detection->selection[selection].details[details].body) - 1);
                     is_key = 0;
+                    details = 0;
+                    selection += 2;
                 }
                 else if (strcmp(key, "condition") == 0) {
                     strncpy(rule->detection->condition, val, sizeof(rule->detection->condition) - 1);
@@ -184,9 +202,10 @@ void print_yaml(const Rule *rule) {
     for (int i = 0; i<2; i++){
         printf("    %s\n", rule->detection->selection[i].name);
         printf("        %s\n", rule->detection->selection[i].field);
-        printf("            \n %s\n", rule->detection->selection[i].details);
+        for (int j = 0; rule->detection->selection[i].details[j].body[0] != '\0'; j++)
+            printf("            %s\n", rule->detection->selection[i].details[j].body);
     }
-    printf("    condition: %s\n", rule->detection->condition);
+    printf("    condition: %s\n\n", rule->detection->condition);
     printf("level: %s\n", rule->level);
     printf("tags:\n %s\n", rule->tags);
 }
