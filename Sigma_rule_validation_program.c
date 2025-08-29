@@ -3,14 +3,9 @@
 #include <string.h> // string 관련 function
 #include <yaml.h>   // LibYAML
 
-typedef struct Tags{
-    char tags[20];
-}Tags;
+typedef struct Tags{ char tags[20]; }Tags;
 
-
-typedef struct Details{
-    char body[80];
-}Details;
+typedef struct Details{ char body[80]; }Details;
 
 typedef struct Selection {
     char name[80];
@@ -215,6 +210,13 @@ void print_yaml(const Rule *rule) {
         printf("     - %s\n", rule->tags[i].tags);
 }
 
+void validate_yamllint(const char *filename){
+    char command[256] = "yamllint ";
+    strcat(command, filename);
+    int result = system(command);
+    printf("%d\n\n", WEXITSTATUS(result));
+}
+
 int main() {
     char fname[256];
     Rule rule;
@@ -239,6 +241,7 @@ int main() {
         exit(1);
     }
 
+    validate_yamllint(fname);
     parse_yaml(fname, &rule);
     print_yaml(&rule);
     return 0;
