@@ -226,6 +226,27 @@ void validate_yamllint(const char *filename){
 
 }
 
+void validate_status(const char *status){
+    int is_valid = 0;
+    char *valid_status[] = {"stable", "test", "experimental", "deprecated", "unsupported"};
+    size_t count = sizeof(valid_status) / sizeof(valid_status[0]);
+    if (status == NULL) {
+        printf("[ERROR] INVALID STATUS -> status is NULL\n");
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        if (strcmp(status, valid_status[i]) == 0) {
+            is_valid = 1;
+            break;
+        }
+    }
+    if (is_valid == 1) {
+        printf("[PASS] VALID SIGMA STATUS\n");
+    } else {
+        printf("[ERROR] Not a valid status name\n");
+    }
+
+}
 void validate_uuid(const char *id) {
     int is_valid = 1;
     if(id == NULL) {
@@ -258,6 +279,7 @@ void validate_uuid(const char *id) {
 
 void validate_sigma(const Rule *rule){
     validate_uuid(rule->id);
+    validate_status(rule->status);
 }
 
 int main() {
