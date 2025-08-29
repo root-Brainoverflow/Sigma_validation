@@ -211,10 +211,17 @@ void print_yaml(const Rule *rule) {
 }
 
 void validate_yamllint(const char *filename){
+    printf("----------- YAMLlint VALIDATION -----------\n\n");
     char command[256] = "yamllint ";
     strcat(command, filename);
+    printf("----------------- RESULT ----------------- \n\n");
     int result = system(command);
-    printf("%d\n\n", WEXITSTATUS(result));
+    if (result != 0){
+        printf("YAMLlint Failed\n");
+        exit(1);
+    }
+    printf("------------------------------------------\n\n");
+
 }
 
 int main() {
