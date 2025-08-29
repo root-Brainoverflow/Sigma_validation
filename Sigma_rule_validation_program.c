@@ -217,7 +217,7 @@ void validate_yamllint(const char *filename){
     printf("----------------- RESULT ----------------- \n\n");
     int result = system(command);
     if (result != 0){
-        printf("YAMLlint Failed\n");
+        printf("ERROR: YAMLlint Failed\n");
         exit(1);
     }
     printf("------------------------------------------\n\n");
