@@ -2,6 +2,7 @@
 #include <stdlib.h> // exit 위해 사용
 #include <string.h> // string 관련 function
 #include <yaml.h>   // LibYAML
+#include <ctype.h>
 
 typedef struct Tags{ char tags[20]; }Tags;
 
@@ -208,6 +209,7 @@ void print_yaml(const Rule *rule) {
     printf("tags: \n");
     for (int i = 0; rule->tags[i].tags[0] != '\0';i++)
         printf("     - %s\n", rule->tags[i].tags);
+    printf("\n");
 }
 
 void validate_yamllint(const char *filename){
@@ -217,11 +219,45 @@ void validate_yamllint(const char *filename){
     printf("----------------- RESULT ----------------- \n\n");
     int result = system(command);
     if (result != 0){
-        printf("ERROR: YAMLlint Failed\n");
+        printf("ERROR: YAMLlint Failed\n\n");
         exit(1);
     }
     printf("------------------------------------------\n\n");
 
+}
+
+void validate_uuid(const char *id) {
+    int is_valid = 1;
+    if(id == NULL) {
+        printf("[ERROR] INVALID UUID -> UUID is EMPTY\n");
+        return;
+    }
+    if (strlen(id) != 36) {
+        printf("[ERROR] INVALID UUID -> A UUID must have a total length of 36 characters\n");
+        is_valid = 0;
+    }
+    for (int i = 0; i < 36; i++){
+        char a = id[i];
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            if (a != '-'){
+                printf("[ERROR] INVALID UUID -> Incorrect hyphen position\n");
+                is_valid = 0;
+                break;
+            }
+        }
+        else {
+            if (!isxdigit(a)) {
+            printf("[ERROR] INVALID UUID -> Invalid hexadecimal character\n");
+            is_valid = 0;
+            break;
+            }
+        }
+    }
+    if (is_valid == 1) {printf("[PASS] VALID SIGMA ID\n");}
+}
+
+void validate_sigma(const Rule *rule){
+    validate_uuid(rule->id);
 }
 
 int main() {
@@ -251,5 +287,6 @@ int main() {
     validate_yamllint(fname);
     parse_yaml(fname, &rule);
     print_yaml(&rule);
+    validate_sigma(&rule);
     return 0;
 }
