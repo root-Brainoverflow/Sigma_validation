@@ -226,12 +226,28 @@ void validate_yamllint(const char *filename){
 
 }
 
+void validate_date(const char *date){
+    for (int i = 0; i < strlen(date); i++){
+        char a = date[i];
+        if (i == 4 || i == 7) {
+            if (a == '/') {
+                printf("[ERROR] INVALID DATE -> The date should use hyphens('-'), not slashes('/')\n");
+                return;
+            } if (a != '-') {
+                printf("[ERROR] INVALID DATE -> The date should be formatted as YYYY-MM-DD\n");
+                return;
+            }
+        }
+    }
+    printf("[PASS] VALID SIGMA DATE\n");
+}
+
 void validate_status(const char *status){
     int is_valid = 0;
     char *valid_status[] = {"stable", "test", "experimental", "deprecated", "unsupported"};
     size_t count = sizeof(valid_status) / sizeof(valid_status[0]);
     if (status == NULL) {
-        printf("[ERROR] INVALID STATUS -> status is NULL\n");
+        printf("[ERROR] INVALID STATUS -> Status is NULL\n");
         return;
     }
     for (int i = 0; i < count; i++) {
@@ -280,6 +296,7 @@ void validate_uuid(const char *id) {
 void validate_sigma(const Rule *rule){
     validate_uuid(rule->id);
     validate_status(rule->status);
+    validate_date(rule->date);
 }
 
 int main() {
