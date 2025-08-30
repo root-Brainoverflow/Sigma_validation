@@ -226,6 +226,20 @@ void validate_yamllint(const char *filename){
 
 }
 
+void validate_logsource(const char *logsource){
+    char *category[] = {"process_creation", "process_access", "network_connection", "driver_load",
+    "image_load", "file_event", "file_delete", "registry_event", "registry_add", "registry_delete",
+    "registry_set", "create_stream_hash", "dns_query"};
+    int count = sizeof(category) / sizeof(category[0]);
+    for (int i = 0; i < count; i++){
+        if(strcmp(logsource, category[i]) == 0) {
+            printf("[PASS] VALID SIGMA LOGSOURCE\n");
+            return;
+        }
+    }
+    printf("[ERROR] INVALID LOGSOURCE -> The provided category is not valid\n");
+}
+
 void validate_date(const char *date){
     for (int i = 0; i < strlen(date); i++){
         char a = date[i];
@@ -263,6 +277,7 @@ void validate_status(const char *status){
     }
 
 }
+
 void validate_uuid(const char *id) {
     int is_valid = 1;
     if(id == NULL) {
@@ -297,6 +312,7 @@ void validate_sigma(const Rule *rule){
     validate_uuid(rule->id);
     validate_status(rule->status);
     validate_date(rule->date);
+    validate_logsource(rule->logsource->category);
 }
 
 int main() {
