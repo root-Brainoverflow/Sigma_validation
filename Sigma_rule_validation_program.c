@@ -226,6 +226,39 @@ void validate_yamllint(const char *filename){
 
 }
 
+void validate_detection(const Detection *detection){
+    const char *selection[20] ={};
+    const char *field[20] = {};
+    const char *appendix[] = {"|all", "|startswith", "|endswith", "|contains", "|exists", "|cased"};
+    size_t appendix_count = sizeof(appendix) / sizeof(appendix[0]);
+
+    for (int i = 0; detection->selection[i].name[0] != '\0'; i++){
+        selection[i] = detection->selection[i].name;
+    }
+    for (int i = 0; detection->selection[i].field[0] != '\0'; i++){
+        field[i] = detection->selection[i].field;
+    }
+    for (int i = 0; field[i] != NULL; i++){
+        const char *split = strrchr(field[i], '|');
+        if(split == NULL) continue;
+        int is_valid = 0;
+        for (int j = 0; j < appendix_count; j++){
+            if (strcmp(split, appendix[j]) == 0){
+                is_valid = 1;
+                break;
+            }
+        }
+        if(!is_valid){
+            printf("[ERROR] INVALID DETECTION -> The modifier is not valid\n");
+            break;
+        }
+    }
+
+
+    
+
+}
+
 void validate_logsource(const char *logsource){
     char *category[] = {"process_creation", "process_access", "network_connection", "driver_load",
     "image_load", "file_event", "file_delete", "registry_event", "registry_add", "registry_delete",
@@ -313,6 +346,7 @@ void validate_sigma(const Rule *rule){
     validate_status(rule->status);
     validate_date(rule->date);
     validate_logsource(rule->logsource->category);
+    validate_detection(rule->detection);
 }
 
 int main() {
