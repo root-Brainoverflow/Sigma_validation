@@ -185,6 +185,7 @@ void parse_yaml(const char *filename, Rule *rule) {
 }
 
 void print_yaml(const Rule *rule) {
+    printf("----------- PARSED SIGMA RULE -----------\n");
     printf("title: %s\n", rule->title);
     printf("id: %s\n", rule->id);
     printf("status: %s\n", rule->status);
@@ -209,7 +210,7 @@ void print_yaml(const Rule *rule) {
     printf("tags: \n");
     for (int i = 0; rule->tags[i].tags[0] != '\0';i++)
         printf("     - %s\n", rule->tags[i].tags);
-    printf("\n");
+    printf("-----------------------------------------\n\n\n");
 }
 
 void validate_yamllint(const char *filename){
@@ -224,6 +225,19 @@ void validate_yamllint(const char *filename){
     }
     printf("------------------------------------------\n\n");
 
+}
+
+void validate_level(const char *level){
+    int is_valid = 0;
+    const char *approved_level[] = {"informational", "low", "medium", "high", "critical"};
+    for (int i = 0; level[i] != '\0';i++){
+        if(strcmp(level, approved_level[i]) == 0){
+            is_valid = 1;
+        }
+    }
+    if (!is_valid) {
+        printf("[ERROR] INVALID LEVEL -> The level is not valid\n");
+    } else {printf("[PASS] VALID SIGMA LEVEL\n");}
 }
 
 void validate_detection(const char *category, const Detection *detection){
@@ -377,13 +391,10 @@ void validate_detection(const char *category, const Detection *detection){
         } else {printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
         }
     }
-
-    
-
 }
 
 void validate_logsource(const char *logsource){
-    char *category[] = {"process_creation", "process_access", "network_connection", "driver_load",
+    const char *category[] = {"process_creation", "process_access", "network_connection", "driver_load",
     "image_load", "file_event", "file_delete", "registry_event", "registry_add", "registry_delete",
     "registry_set", "create_stream_hash", "dns_query"};
     int count = sizeof(category) / sizeof(category[0]);
@@ -414,7 +425,7 @@ void validate_date(const char *date){
 
 void validate_status(const char *status){
     int is_valid = 0;
-    char *valid_status[] = {"stable", "test", "experimental", "deprecated", "unsupported"};
+    const char *valid_status[] = {"stable", "test", "experimental", "deprecated", "unsupported"};
     size_t count = sizeof(valid_status) / sizeof(valid_status[0]);
     if (status == NULL) {
         printf("[ERROR] INVALID STATUS -> Status is NULL\n");
@@ -465,11 +476,14 @@ void validate_uuid(const char *id) {
 }
 
 void validate_sigma(const Rule *rule){
+    printf("----------- SIGMA RULE VALIDATION -----------\n");
     validate_uuid(rule->id);
     validate_status(rule->status);
     validate_date(rule->date);
     validate_logsource(rule->logsource->category);
     validate_detection(rule->logsource->category, rule->detection);
+    validate_level(rule->level);
+    printf("------------ VALIDATION COMPLETE ------------\n\n\n");
 }
 
 int main() {
@@ -500,5 +514,6 @@ int main() {
     parse_yaml(fname, &rule);
     print_yaml(&rule);
     validate_sigma(&rule);
+
     return 0;
 }
