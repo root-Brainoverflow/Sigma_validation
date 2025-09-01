@@ -192,7 +192,7 @@ void print_yaml(const Rule *rule) {
     printf("description: %s", rule->description);
     printf("author: %s\n", rule->author);
     printf("date: %s\n", rule->date);
-    if(rule->modified[0] != '\0')
+    if (rule->modified[0] != '\0')
         printf("modified: %s\n", rule->modified);
     printf("references:\n %s\n\n", rule->references);
     printf("logsource:\n");
@@ -339,14 +339,14 @@ void validate_detection(const char *category, const Detection *detection){
     }
     for (int i = 0; field[i] != NULL; i++){
         const char *split = strrchr(field[i], '|');
-        if(split == NULL) continue;
+        if (split == NULL) continue;
         for (int j = 0; j < appendix_count; j++){
             if (strcmp(split, appendix[j]) == 0){
                 is_valid = 1;
                 break;
             }
         }
-        if(!is_valid){
+        if (!is_valid){
             printf("[ERROR] INVALID DETECTION -> The modifier is not valid\n");
             break;
         } else {
@@ -357,7 +357,7 @@ void validate_detection(const char *category, const Detection *detection){
     }
     
     for (int i = 0; i < 14; i++){
-        if(strcmp(category, category_fields[i].category) == 0){
+        if (strcmp(category, category_fields[i].category) == 0){
             for (int j = 0; category_fields[i].fields[j] != NULL; j++){
                 if (field[i] == NULL) continue;
                 const char *sep = strchr(field[i], '|');
@@ -371,25 +371,30 @@ void validate_detection(const char *category, const Detection *detection){
         }
     }
     }
-    if(!is_valid) {
+    if (!is_valid) {
         printf("[ERROR] INVALID DETECTION -> The provided field is not found in the specified category\n");
     } else {
         printf("[PASS] VALID SIGMA DETECTION - VALID FIELD\n");
         is_valid = 0;
     }
-    if(strstr(detection->condition, "all of") != NULL || strstr(detection->condition, "1 of") != NULL){
+    if (strstr(detection->condition, "all of") != NULL || strstr(detection->condition, "1 of") != NULL){
         printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
-    } else{
+    } else {
         int cmp = 0;
         for (int i = 0; selection[i] != NULL; i++){
-            if(strstr(detection->condition, selection[i]) != NULL){
+            if (strstr(detection->condition, selection[i]) != NULL){
                 cmp++;
             }
         }
-        if(cmp < count){
-        printf("[ERROR] INVALID DETECTION -> The number of selections does not match the count specified in the condition\n");
-        } else {printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
+        if (cmp < count) { printf("[ERROR] INVALID DETECTION -> The number of selections does not match the count specified in the condition\n");} 
+        else if (cmp == count) {
+            if (strstr(detection->condition, "and") != NULL || strstr(detection->condition, "or") != NULL) {
+                printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
+            }
+            else { printf("[ERROR] INVALID DETECTION -> Multiple selections must be linked with an and or or condition within the condition field\n");}
         }
+        else { printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");}
+
     }
 }
 
