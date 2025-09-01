@@ -226,14 +226,99 @@ void validate_yamllint(const char *filename){
 
 }
 
-void validate_detection(const Detection *detection){
+void validate_detection(const char *category, const Detection *detection){
     const char *selection[20] ={};
     const char *field[20] = {};
     const char *appendix[] = {"|all", "|startswith", "|endswith", "|contains", "|exists", "|cased"};
     size_t appendix_count = sizeof(appendix) / sizeof(appendix[0]);
+    int is_valid = 0;
 
-    for (int i = 0; detection->selection[i].name[0] != '\0'; i++){
-        selection[i] = detection->selection[i].name;
+    static const char *process_creation[] = {
+        "UtcTime","ProcessId","Image","FileVersion","Description","Product","Company",
+        "OriginalFileName","CommandLine","CurrentDirectory","User","LogonId",
+        "TerminalSessionId","IntegrityLevel","Hashes","ParentProcessId","ParentImage",
+        "ParentCommandLine","ParentUser", NULL
+    };
+
+    static const char *process_access[] = {
+        "UtcTime","SourceProcessId","SourceThreadId","SourceImage","TargetProcessId",
+        "TargetImage","GrantedAccess", "SourceUser", "TargetUser", NULL
+    };
+
+    static const char *network_connection[] = {
+        "UtcTime","ProcessId","Image","User","Protocol","Initiated","SourceIpv6","SourceIp",
+        "SourceHostname","SourcePort","SourcePortName","DestinationIpv6","DestinationIp",
+        "DestinationHostname","DestinationPort","DestinationPortname", NULL
+    };
+
+    static const char *driver_load[] = {
+        "UtcTime","ImageLoaded","Hashes","Signed","Signature","SignatureStatus", NULL
+    };
+
+    static const char *image_load[] = {
+        "UtcTime","ProcessId","Image","ImageLoaded","FileVersion","Description","Product",
+        "Company","OriginalFileName","Hashes","Signed","Signature","SignatureStatus","User", NULL
+    };
+
+    static const char *file_event[] = {
+        "UtcTime","ProcessId","Image","TargetFilename","CreationUtcTime","User", NULL
+    };
+
+    static const char *registry_event[] = {
+        "UtcTime","ProcessId","Image","Details","TargetObject","User", NULL
+    };
+
+    static const char *registry_add[] = {
+        "UtcTime","ProcessId","Image","TargetObject","User", NULL
+    };
+
+    static const char *registry_delete[] = {
+        "UtcTime","ProcessId","Image","TargetObject","User", NULL
+    };
+
+    static const char *registry_set[] = {
+        "UtcTime","ProcessId","Image","TargetObject","Details","User", NULL
+    };
+
+    static const char *create_stream_hash[] = {
+        "UtcTime","ProcessId","Image","TargetFileName","CreationUtcTime","Hash","User", NULL
+    };
+
+    static const char *dns_query[] = {
+        "UtcTime","ProcessId","QueryName","QueryStatus","QueryResults","Image","User", NULL
+    };
+
+    static const char *file_delete[] = {
+        "UtcTime","ProcessId","User","Image","Hashes","IsExecutable","Archived", NULL
+    };
+
+    static const char *file_delete_detected[] = {
+        "UtcTime","ProcessId","User","Image","TargetFileName","Hashes","IsExecutable", NULL
+    };
+    
+    static const struct {
+        const char *category;
+        const char* const *fields;
+    } category_fields[] = {
+        {"process_creation", process_creation},
+        {"process_access", process_access},
+        {"network_connection", network_connection},
+        {"driver_load", driver_load},
+        {"image_load", image_load},
+        {"file_event", file_event},
+        {"registry_event", registry_event},
+        {"registry_add", registry_add},
+        {"registry_delete", registry_delete},
+        {"registry_set", registry_set},
+        {"create_stream_hash", create_stream_hash},
+        {"dns_query", dns_query},
+        {"file_delete", file_delete},
+        {"file_delete_detected", file_delete_detected},
+        {NULL, NULL}
+    };
+    int count = 0;
+    for (; detection->selection[count].name[0] != '\0'; count++){
+        selection[count] = detection->selection[count].name;
     }
     for (int i = 0; detection->selection[i].field[0] != '\0'; i++){
         field[i] = detection->selection[i].field;
@@ -241,7 +326,6 @@ void validate_detection(const Detection *detection){
     for (int i = 0; field[i] != NULL; i++){
         const char *split = strrchr(field[i], '|');
         if(split == NULL) continue;
-        int is_valid = 0;
         for (int j = 0; j < appendix_count; j++){
             if (strcmp(split, appendix[j]) == 0){
                 is_valid = 1;
@@ -251,9 +335,48 @@ void validate_detection(const Detection *detection){
         if(!is_valid){
             printf("[ERROR] INVALID DETECTION -> The modifier is not valid\n");
             break;
+        } else {
+            printf("[PASS] VALID SIGMA DETECTION - VALID MODIFIER (%d)\n", i+1);
+            is_valid = 0;
+        }
+
+    }
+    
+    for (int i = 0; i < 14; i++){
+        if(strcmp(category, category_fields[i].category) == 0){
+            for (int j = 0; category_fields[i].fields[j] != NULL; j++){
+                if (field[i] == NULL) continue;
+                const char *sep = strchr(field[i], '|');
+                size_t name_len = sep ? (size_t)(sep - field[i]) : strlen(field[i]);
+                const char *allowed_field = category_fields[i].fields[j];
+
+                if (strncmp(field[i], allowed_field, name_len) == 0) {
+                    is_valid = 1;
+                    break;
+                }
         }
     }
-
+    }
+    if(!is_valid) {
+        printf("[ERROR] INVALID DETECTION -> The provided field is not found in the specified category\n");
+    } else {
+        printf("[PASS] VALID SIGMA DETECTION - VALID FIELD\n");
+        is_valid = 0;
+    }
+    if(strstr(detection->condition, "all of") != NULL || strstr(detection->condition, "1 of") != NULL){
+        printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
+    } else{
+        int cmp = 0;
+        for (int i = 0; selection[i] != NULL; i++){
+            if(strstr(detection->condition, selection[i]) != NULL){
+                cmp++;
+            }
+        }
+        if(cmp < count){
+        printf("[ERROR] INVALID DETECTION -> The number of selections does not match the count specified in the condition\n");
+        } else {printf("[PASS] VALID SIGMA DETECTION - VALID CONDITION\n");
+        }
+    }
 
     
 
@@ -346,7 +469,7 @@ void validate_sigma(const Rule *rule){
     validate_status(rule->status);
     validate_date(rule->date);
     validate_logsource(rule->logsource->category);
-    validate_detection(rule->detection);
+    validate_detection(rule->logsource->category, rule->detection);
 }
 
 int main() {
