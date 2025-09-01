@@ -185,7 +185,7 @@ void parse_yaml(const char *filename, Rule *rule) {
 }
 
 void print_yaml(const Rule *rule) {
-    printf("----------- PARSED SIGMA RULE -----------\n");
+    printf("+---------------------------  PARSED SIGMA RULE ---------------------------+\n");
     printf("title: %s\n", rule->title);
     printf("id: %s\n", rule->id);
     printf("status: %s\n", rule->status);
@@ -210,20 +210,20 @@ void print_yaml(const Rule *rule) {
     printf("tags: \n");
     for (int i = 0; rule->tags[i].tags[0] != '\0';i++)
         printf("     - %s\n", rule->tags[i].tags);
-    printf("-----------------------------------------\n\n\n");
+    printf("+--------------------------------------------------------------------------+\n\n\n");
 }
 
 void validate_yamllint(const char *filename){
-    printf("----------- YAMLlint VALIDATION -----------\n\n");
+    printf("\n\n+--------------------------- YAMLlint VALIDATION --------------------------+\n");
     char command[256] = "yamllint ";
     strcat(command, filename);
-    printf("----------------- RESULT ----------------- \n\n");
+    printf("\n----------------------------------- RESULT ---------------------------------\n\n");
     int result = system(command);
     if (result != 0){
         printf("ERROR: YAMLlint Failed\n\n");
         exit(1);
     }
-    printf("------------------------------------------\n\n");
+    printf("+--------------------------------------------------------------------------+\n\n\n");
 
 }
 
@@ -476,22 +476,26 @@ void validate_uuid(const char *id) {
 }
 
 void validate_sigma(const Rule *rule){
-    printf("----------- SIGMA RULE VALIDATION -----------\n");
+    printf("+--------------------------- SIGMA RULE VALIDATION ------------------------+\n\n");
     validate_uuid(rule->id);
     validate_status(rule->status);
     validate_date(rule->date);
     validate_logsource(rule->logsource->category);
     validate_detection(rule->logsource->category, rule->detection);
     validate_level(rule->level);
-    printf("------------ VALIDATION COMPLETE ------------\n\n\n");
+    printf("\n+---------------------------- VALIDATION COMPLETE -------------------------+\n\n\n");
 }
 
 int main() {
     char fname[256];
     Rule rule;
     memset(&rule, 0, sizeof(rule));
+    
+    printf("+--------------------------------------------------------------------------+\n");
+    printf("|                       SIGMA Rule Validator v1.0                          |\n");
+    printf("+--------------------------------------------------------------------------+\n\n");
 
-    printf("SIGMA RULE NAME(.yaml): ");
+    printf("Enter Sigma file path (.yaml) > ");
     if (!fgets(fname, sizeof(fname), stdin)) {
         fprintf(stderr, "Failed to read filename\n");
         exit(1);
