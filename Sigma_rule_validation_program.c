@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h> // exit 위해 사용
-#include <string.h> // string 관련 function
-#include <yaml.h>   // LibYAML
+#include <stdlib.h>
+#include <string.h>
+#include <yaml.h>
 #include <ctype.h>
 
 typedef struct Tags{ char tags[20]; }Tags;
